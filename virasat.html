@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Virasat – Legal Heir Helper</title>
+<style>
+  :root{--maroon:#8b1a1f;--gold:#dc9f4a;--cream:#faf6ec;--ink:#2a2220;--card:#fff;--ok:#2e7d32;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Devanagari",Segoe UI,Roboto,sans-serif;background:var(--cream);color:var(--ink);font-size:18px;line-height:1.5}
+  header{background:var(--maroon);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  header h1{margin:0;font-size:22px}
+  header small{opacity:.85;display:block;font-size:13px}
+  .lang button{background:transparent;border:1px solid #fff;color:#fff;border-radius:8px;padding:6px 10px;font-size:15px;cursor:pointer}
+  .lang button.on{background:#fff;color:var(--maroon);font-weight:700}
+  main{max-width:640px;margin:0 auto;padding:16px}
+  .bar{height:8px;background:#e8dfcc;border-radius:99px;overflow:hidden;margin-bottom:14px}
+  .bar div{height:100%;background:var(--gold);transition:width .3s}
+  .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px}
+  h2{margin:0 0 6px;color:var(--maroon);font-size:21px}
+  p{margin:6px 0}
+  .opt{display:block;width:100%;text-align:left;background:#fff;border:2px solid #e3d8c0;border-radius:12px;padding:14px;margin:8px 0;font-size:18px;cursor:pointer}
+  .opt:hover,.opt:focus{border-color:var(--gold)}
+  .opt.sel{border-color:var(--maroon);background:#fbeeee}
+  .btn{background:var(--maroon);color:#fff;border:0;border-radius:12px;padding:14px 18px;font-size:18px;cursor:pointer;margin:6px 6px 0 0}
+  .btn.alt{background:#fff;color:var(--maroon);border:2px solid var(--maroon)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .speak{float:right;background:#fff;border:2px solid var(--gold);border-radius:99px;padding:6px 12px;font-size:15px;cursor:pointer}
+  label.chk{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f0e8d6}
+  label.chk input{width:24px;height:24px;margin-top:2px;accent-color:var(--maroon);flex:none}
+  input[type=text]{width:100%;padding:12px;font-size:18px;border:2px solid #e3d8c0;border-radius:10px;margin:4px 0 10px}
+  textarea{width:100%;min-height:300px;padding:12px;font-size:16px;border:2px solid #e3d8c0;border-radius:10px;font-family:inherit}
+  .note{background:#fff6dd;border-left:5px solid var(--gold);padding:10px 12px;border-radius:8px;font-size:15px}
+  .tag{display:inline-block;background:#fbeeee;color:var(--maroon);border-radius:99px;padding:2px 10px;font-size:13px;margin-bottom:6px}
+  a{color:var(--maroon);word-break:break-all}
+  footer{max-width:640px;margin:0 auto;padding:0 16px 30px;font-size:13px;color:#6b5f55}
+  @media print{header,.bar,.nav,.speak,footer,.noprint{display:none!important}.card{box-shadow:none}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Virasat · विरासत</h1><small id="sub"></small></div>
+  <div class="lang"><button id="bhi" onclick="setLang('hi')">हिंदी</button> <button id="ben" onclick="setLang('en')">English</button></div>
+</header>
+<main>
+  <div class="bar"><div id="prog"></div></div>
+  <div id="view"></div>
+</main>
+<footer id="foot"></footer>
+
+<script>
+// ---------- Text (Hindi / English) ----------
+const T = {
+ hi:{
+  sub:"परिवार के निवेश खोजने और पाने में मदद",
+  foot:"यह एक जानकारी देने वाला टूल है, कानूनी सलाह नहीं। नियम हर मामले में अलग हो सकते हैं, इसलिए अपने DP/RTA या किसी वकील से पुष्टि करें। हम कोई जानकारी सेव नहीं करते; सब कुछ सिर्फ आपके फ़ोन/ब्राउज़र में रहता है। हम कोई निवेश सलाह नहीं देते।",
+  next:"आगे बढ़ें",back:"पीछे",speak:"🔊 सुनें",start:"शुरू करें",
+  welcomeT:"आपके परिवार के निवेश, आसान कदमों में",
+  welcomeP:"अगर परिवार के किसी सदस्य का निधन हो गया है और आपको नहीं पता कि उनके शेयर या म्यूचुअल फंड कहाँ हैं, तो यह टूल आपको कदम-दर-कदम रास्ता बताएगा। कुछ आसान सवाल पूछे जाएंगे।",
+  welcomeN:"🔒 आपकी कोई जानकारी सेव या भेजी नहीं जाती।",
+  q1:"क्या उनके Demat खाते या म्यूचुअल फंड में कोई नॉमिनी (nominee) था?",
+  q1o:[["yes","हाँ, नॉमिनी था"],["no","नहीं, कोई नॉमिनी नहीं था"],["unk","पता नहीं"]],
+  q2:"क्या उन्होंने कोई वसीयत (Will) छोड़ी है?",
+  q2o:[["yes","हाँ"],["no","नहीं"],["unk","पता नहीं"]],
+  q3:"क्या आपको पता है कि उनके निवेश कहाँ-कहाँ थे?",
+  q3o:[["know","हाँ, कुछ पता है (स्टेटमेंट/ईमेल हैं)"],["part","थोड़ा-बहुत अंदाज़ा है"],["none","बिल्कुल पता नहीं"]],
+  q4:"आप मृतक के कौन हैं?",
+  q4o:[["spouse","पति/पत्नी"],["child","बेटा/बेटी"],["other","अन्य रिश्तेदार"]],
+  resT:"आपकी चेकलिस्ट",
+  resP:"नीचे दिए कदम आपके जवाबों पर आधारित हैं। पूरा होने पर टिक करें।",
+  g_docs:"1. ज़रूरी कागज़ात इकट्ठा करें",
+  g_find:"2. निवेश खोजें",
+  g_claim:"3. दावा करें",
+  g_help:"4. अगर देरी हो या मना किया जाए",
+  d_death:"मृत्यु प्रमाण पत्र (कई प्रतियां, सत्यापित)",
+  d_id:"आपका पहचान और पते का प्रमाण (आधार, PAN)",
+  d_rel:"रिश्ते का प्रमाण (विवाह प्रमाण पत्र / जन्म प्रमाण पत्र / परिवार रजिस्टर)",
+  d_will:"वसीयत की प्रति (अगर है)",
+  d_noms:"नॉमिनी का ID और बैंक विवरण (नॉमिनी के लिए)",
+  d_legal:"अगर नॉमिनी या वसीयत नहीं है: उत्तराधिकार प्रमाण पत्र / कानूनी वारिस प्रमाण पत्र या DP जो मांगे (DP से पूछें)",
+  f_mail:"मृतक के ईमेल, डाक और पुराने बैंक स्टेटमेंट में Demat, DP, म्यूचुअल फंड के पत्र या CAS देखें",
+  f_cas:"NSDL/CDSL की ओर से आने वाले मासिक स्टेटमेंट (CAS) या PAN से जुड़े खाते देखें",
+  f_mf:"म्यूचुअल फंड के लिए MFCentral जैसी आधिकारिक साइट या फंड हाउस/RTA से पूछें",
+  f_iepf:"पुराने बिना-दावे के लाभांश/शेयरों के लिए IEPF पोर्टल (iepf.gov.in) देखें",
+  c_nom:"नॉमिनी हैं: DP/फंड हाउस को नॉमिनी का आवेदन, मृत्यु प्रमाण पत्र और ID दें",
+  c_nonom:"नॉमिनी नहीं हैं: DP/फंड हाउस से पूछें कि कानूनी वारिस के रूप में कौन से कागज़ात चाहिए",
+  c_letter:"नीचे दिए पत्र जनरेटर से DP को आवेदन पत्र बनाएं और जमा करें",
+  c_note:"ट्रांसमिशन (नाम बदलने) की प्रक्रिया हर DP में थोड़ी अलग हो सकती है। DP से लिखित में पूछें।",
+  h_dp:"DP/कंपनी से पहले लिखित शिकायत दें और रसीद/रेफरेंस नंबर रखें",
+  h_scores:"समय पर जवाब न मिले तो SEBI SCORES (scores.sebi.gov.in) पर शिकायत दर्ज करें",
+  h_comp:"शिकायत में तारीखें, खाता नंबर, पिछले पत्र और ईमेल साथ लगाएं",
+  letterBtn:"पत्र बनाएं",
+  lt:"DP के लिए आवेदन पत्र",
+  lp:"अपनी जानकारी भरें। यह सिर्फ इस पेज पर बनेगा, कहीं भेजा या सेव नहीं होगा।",
+  f1:"आपका नाम",f2:"मृतक का नाम",f3:"रिश्ता (जैसे पत्नी, बेटा)",f4:"DP/कंपनी का नाम",f5:"Demat/क्लाइंट ID (पता हो तो)",f6:"मृत्यु की तारीख",
+  gen:"पत्र तैयार करें",copy:"कॉपी करें",print:"प्रिंट",copied:"कॉपी हो गया ✓",
+  resBtn:"उपयोगी लिंक देखें",
+  rt:"आधिकारिक जगहें",
+  rp:"इन्हें खोलने से पहले वेब पते को ध्यान से जांचें। असली सरकारी साइट के पते gov.in या sebi.gov.in आदि से खत्म होते हैं।",
+  warn:"⚠️ सावधान: कोई भी “वसूली एजेंट” जो पैसे पहले मांगे, उस पर भरोसा न करें। निधन के बाद वारिस को दावे के लिए आधिकारिक प्रक्रिया में कोई अग्रिम ‘फीस’ देने की ज़रूरत नहीं होती, ऐसे दावे की पुष्टि DP से करें।",
+  letter:(d)=>`सेवा में,\nप्रबंधक / Depository Participant\n${d.dp||"[DP का नाम]"}\n\nविषय: मृतक निवेशक ${d.dec||"[नाम]"} के Demat खाते के संबंध में निवेदन\n\nमहोदय/महोदया,\n\nमैं, ${d.me||"[आपका नाम]"}, मृतक ${d.dec||"[नाम]"} की/का ${d.rel||"[रिश्ता]"} हूँ। उनका निधन ${d.date||"[तारीख]"} को हो गया है।\n\nउनका Demat खाता आपके पास है${d.id?" (क्लाइंट/Demat ID: "+d.id+")":""}। कृपया मुझे बताएं कि खाते की प्रतिभूतियों के ट्रांसमिशन (हस्तांतरण) के लिए मुझे कौन-कौन से फॉर्म और दस्तावेज़ जमा करने होंगे, और पूरी प्रक्रिया की समय-सीमा क्या होगी।\n\nसंलग्न: मृत्यु प्रमाण पत्र, मेरा पहचान प्रमाण, रिश्ते का प्रमाण (जो उपलब्ध हैं)।\n\nकृपया इस पत्र की पावती/रेफरेंस नंबर दें।\n\nधन्यवाद,\n${d.me||"[आपका नाम]"}\nदिनांक: ____________  हस्ताक्षर: ____________`,
+  done:"प्रगति",
+ },
+ en:{
+  sub:"Find and claim a family member's investments, step by step",
+  foot:"This is an informational tool, not legal advice. Rules can vary by case, so confirm with your DP/RTA or a lawyer. We store nothing; everything stays on your phone/browser. We never give investment advice.",
+  next:"Next",back:"Back",speak:"🔊 Listen",start:"Start",
+  welcomeT:"Your family's investments, in simple steps",
+  welcomeP:"If a family member has passed away and you don't know where their shares or mutual funds are, this tool guides you step by step. We'll ask a few easy questions.",
+  welcomeN:"🔒 Nothing you enter is saved or sent anywhere.",
+  q1:"Did their Demat account or mutual funds have a nominee?",
+  q1o:[["yes","Yes, there was a nominee"],["no","No nominee"],["unk","Not sure"]],
+  q2:"Did they leave a Will?",
+  q2o:[["yes","Yes"],["no","No"],["unk","Not sure"]],
+  q3:"Do you know where their investments were?",
+  q3o:[["know","Yes, I have some idea (statements/emails exist)"],["part","I have a rough idea"],["none","No idea at all"]],
+  q4:"How are you related to the person who passed away?",
+  q4o:[["spouse","Husband / Wife"],["child","Son / Daughter"],["other","Other relative"]],
+  resT:"Your checklist",
+  resP:"These steps are based on your answers. Tick each one when done.",
+  g_docs:"1. Gather documents",
+  g_find:"2. Find the investments",
+  g_claim:"3. Make the claim",
+  g_help:"4. If there is delay or refusal",
+  d_death:"Death certificate (several attested copies)",
+  d_id:"Your ID and address proof (Aadhaar, PAN)",
+  d_rel:"Proof of relationship (marriage / birth certificate / family register)",
+  d_will:"Copy of the Will (if there is one)",
+  d_noms:"Nominee's ID and bank details (if you are the nominee)",
+  d_legal:"If there is no nominee or Will: succession certificate / legal heir certificate, or whatever the DP asks for (ask your DP)",
+  f_mail:"Check their emails, post and old bank statements for Demat, DP, mutual fund letters or CAS statements",
+  f_cas:"Look for monthly statements (CAS) from NSDL/CDSL or accounts linked to their PAN",
+  f_mf:"For mutual funds, ask the fund house/RTA or use an official platform like MFCentral",
+  f_iepf:"For old unclaimed dividends/shares, check the IEPF portal (iepf.gov.in)",
+  c_nom:"You are the nominee: submit the nominee application, death certificate and ID to the DP/fund house",
+  c_nonom:"No nominee: ask the DP/fund house in writing which legal-heir documents they need",
+  c_letter:"Use the letter generator below to create a request letter for the DP",
+  c_note:"The transmission (name change) process can differ slightly between DPs. Always ask your DP in writing.",
+  h_dp:"First give a written complaint to the DP/company and keep the receipt/reference number",
+  h_scores:"If you don't get a timely reply, file a complaint on SEBI SCORES (scores.sebi.gov.in)",
+  h_comp:"Attach dates, account numbers, earlier letters and emails to your complaint",
+  letterBtn:"Create letter",
+  lt:"Request letter to the DP",
+  lp:"Fill in your details. The letter is made on this page only; nothing is saved or sent.",
+  f1:"Your name",f2:"Name of the deceased",f3:"Relationship (e.g., wife, son)",f4:"DP / company name",f5:"Demat / Client ID (if known)",f6:"Date of death",
+  gen:"Generate letter",copy:"Copy",print:"Print",copied:"Copied ✓",
+  resBtn:"See useful links",
+  rt:"Official places",
+  rp:"Check the web address carefully before you open these. Genuine government sites end in gov.in, sebi.gov.in and similar.",
+  warn:"⚠️ Beware: don't trust any “recovery agent” who asks for money upfront. Heirs don't need to pay an advance ‘fee’ to start an official claim. Confirm any such demand with your DP.",
+  letter:(d)=>`To,\nThe Manager / Depository Participant\n${d.dp||"[DP name]"}\n\nSubject: Request regarding the Demat account of the late ${d.dec||"[Name]"}\n\nDear Sir/Madam,\n\nI, ${d.me||"[Your name]"}, am the ${d.rel||"[relationship]"} of the late ${d.dec||"[Name]"}, who passed away on ${d.date||"[date]"}.\n\nThey held a Demat account with you${d.id?" (Client/Demat ID: "+d.id+")":""}. Kindly inform me of the forms and documents I need to submit for transmission of the securities in this account, and the expected timeline for the process.\n\nEnclosed: death certificate, my ID proof, proof of relationship (as available).\n\nPlease provide an acknowledgement/reference number for this letter.\n\nThank you,\n${d.me||"[Your name]"}\nDate: ____________  Signature: ____________`,
+  done:"Progress",
+ }
+};
+const LINKS=[
+ ["IEPF – Unclaimed dividends & shares","https://www.iepf.gov.in"],
+ ["SEBI SCORES – Complaints","https://scores.sebi.gov.in"],
+ ["NSDL","https://nsdl.co.in"],
+ ["CDSL","https://www.cdslindia.com"],
+ ["MFCentral – Mutual funds","https://www.mfcentral.com"],
+ ["Cyber crime (if you suspect fraud)","https://cybercrime.gov.in"]
+];
+
+// ---------- State (memory only; nothing saved) ----------
+let lang="hi", step=0, ans={}, ticks={}, form={};
+const STEPS=6; // 0 welcome,1-4 q,5 results,6 letter,7 links
+
+function t(){return T[lang]}
+function setLang(l){lang=l;document.documentElement.lang=l;render()}
+function speak(txt){
+  if(!("speechSynthesis" in window)){alert("Voice not supported on this device");return}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(txt);u.lang=lang==="hi"?"hi-IN":"en-IN";u.rate=.9;speechSynthesis.speak(u);
+}
+function say(id){speak(document.getElementById(id).innerText)}
+function go(n){step=n;speechSynthesis&&speechSynthesis.cancel();render();window.scrollTo(0,0)}
+function pick(k,v){ans[k]=v;render()}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function question(k,qkey,okey,prevStep,nextStep){
+  const o=t()[okey];
+  return `<div class="card" id="qc"><button class="speak" onclick="say('qc')">${t().speak}</button>
+   <h2>${t()[qkey]}</h2>
+   ${o.map(([v,l])=>`<button class="opt ${ans[k]===v?'sel':''}" onclick="pick('${k}','${v}')">${l}</button>`).join("")}
+   </div>
+   <div class="nav"><button class="btn alt" onclick="go(${prevStep})">${t().back}</button>
+   <button class="btn" ${ans[k]?'':'disabled'} onclick="go(${nextStep})">${t().next}</button></div>`;
+}
+
+function checklist(){
+  const L=t(); const g=[];
+  const docs=[["d_death"],["d_id"],["d_rel"]];
+  if(ans.q2==="yes"||ans.q2==="unk")docs.push(["d_will"]);
+  if(ans.q1==="yes")docs.push(["d_noms"]);
+  if(ans.q1!=="yes")docs.push(["d_legal"]);
+  g.push(["g_docs",docs]);
+  const find=[];
+  if(ans.q3!=="know"){find.push(["f_mail"],["f_cas"]);}
+  find.push(["f_mf"],["f_iepf"]);
+  if(ans.q3==="know")find.unshift(["f_cas"]);
+  g.push(["g_find",find]);
+  const claim=[ans.q1==="yes"?["c_nom"]:["c_nonom"],["c_letter"],["c_note"]];
+  g.push(["g_claim",claim]);
+  g.push(["g_help",[["h_dp"],["h_scores"],["h_comp"]]]);
+  return g;
+}
+function allKeys(){return checklist().flatMap(([,items])=>items.map(i=>i[0]))}
+function tick(k){ticks[k]=!ticks[k];render()}
+
+function render(){
+  const L=t();
+  document.getElementById("sub").textContent=L.sub;
+  document.getElementById("foot").textContent=L.foot;
+  document.getElementById("bhi").className=lang==="hi"?"on":"";
+  document.getElementById("ben").className=lang==="en"?"on":"";
+  const v=document.getElementById("view");
+  let html="";
+  if(step===0){
+    html=`<div class="card" id="wc"><button class="speak" onclick="say('wc')">${L.speak}</button>
+      <h2>${L.welcomeT}</h2><p>${L.welcomeP}</p><p class="note">${L.welcomeN}</p></div>
+      <button class="btn" onclick="go(1)">${L.start}</button>`;
+  } else if(step===1) html=question("q4","q4","q4o",0,2);
+  else if(step===2) html=question("q1","q1","q1o",1,3);
+  else if(step===3) html=question("q2","q2","q2o",2,4);
+  else if(step===4) html=question("q3","q3","q3o",3,5);
+  else if(step===5){
+    const keys=allKeys(), done=keys.filter(k=>ticks[k]).length;
+    html=`<div class="card" id="rc"><button class="speak" onclick="say('rc')">${L.speak}</button>
+      <h2>${L.resT}</h2><p>${L.resP}</p>
+      <p><b>${L.done}: ${done}/${keys.length}</b></p>
+      ${checklist().map(([g,items])=>`<h2 style="font-size:18px;margin-top:14px">${L[g]}</h2>`+items.map(([k])=>`<label class="chk"><input type="checkbox" ${ticks[k]?'checked':''} onchange="tick('${k}')"><span>${L[k]}</span></label>`).join("")).join("")}
+      </div>
+      <p class="note">${L.warn}</p>
+      <div class="nav"><button class="btn alt" onclick="go(4)">${L.back}</button>
+      <button class="btn" onclick="go(6)">${L.letterBtn}</button>
+      <button class="btn alt" onclick="go(7)">${L.resBtn}</button></div>`;
+  } else if(step===6){
+    const fields=[["me","f1"],["dec","f2"],["rel","f3"],["dp","f4"],["id","f5"],["date","f6"]];
+    html=`<div class="card"><h2>${L.lt}</h2><p>${L.lp}</p>
+      ${fields.map(([k,l])=>`<label>${L[l]}<input type="text" value="${esc(form[k]||"")}" oninput="form['${k}']=this.value"></label>`).join("")}
+      <button class="btn" onclick="genLetter()">${L.gen}</button></div>
+      <div id="out"></div>
+      <div class="nav"><button class="btn alt" onclick="go(5)">${L.back}</button></div>`;
+  } else if(step===7){
+    html=`<div class="card" id="lc"><button class="speak" onclick="say('lc')">${L.speak}</button><h2>${L.rt}</h2><p>${L.rp}</p>
+      ${LINKS.map(([n,u])=>`<p>🔗 <b>${n}</b><br><a href="${u}" target="_blank" rel="noopener">${u}</a></p>`).join("")}</div>
+      <div class="nav"><button class="btn alt" onclick="go(5)">${L.back}</button></div>`;
+  }
+  v.innerHTML=html;
+  document.getElementById("prog").style.width=Math.min(100,Math.round(step/7*100))+"%";
+}
+function genLetter(){
+  const txt=t().letter(form);
+  document.getElementById("out").innerHTML=`<div class="card"><textarea id="lt">${esc(txt)}</textarea>
+   <button class="btn" onclick="copyL()" id="cb">${t().copy}</button>
+   <button class="btn alt" onclick="window.print()">${t().print}</button></div>`;
+  document.getElementById("out").scrollIntoView({behavior:"smooth"});
+}
+function copyL(){
+  const ta=document.getElementById("lt");ta.select();
+  (navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.resolve(document.execCommand("copy")))
+   .then(()=>{document.getElementById("cb").textContent=t().copied});
+}
+render();
+</script>
+</body>
+</html>
